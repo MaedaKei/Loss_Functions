@@ -101,7 +101,7 @@ class Loss_Functions:
             elif token_check=="operator":#デコレートする
                 operator=Loss_Functions.operators[token]
                 #逆ポーランド記法から計算する際、スタックから取り出したトークンは取り出した時と逆順で演算子に渡す
-                #inputリストを逆順にする必要があるが、reversed()を使うといてレートオブジェクトになって繰り返し使えなくなる
+                #inputリストを逆順にする必要があるが、reversed()を使うとイイテレートオブジェクトになって繰り返し使えなくなる
                 #よって[::-1]とすることで順番を逆にする
                 input=[workspace.pop() for _ in range(operator.need_term)][::-1]
                 workspace.append(self.operator_dec(input,operator))
@@ -113,6 +113,7 @@ class Loss_Functions:
         return lambda:float(num)
     #定数項部分 (損失値)
     def loss_dec(self,loss:str):
+        #self.temporary_logにはあらかじめ計算された損失値がある。
         return lambda:self.temporary_log[loss]
     #演算部分
     def operator_dec(self,func_list:list,operator):
@@ -124,7 +125,7 @@ class Loss_Functions:
         #temporary_logの初期化
         """
         現時点ではself.temporary_logを内包表記で初期化したときにアドレスが変わるのか、
-        そうなった場合,損失関数の参照場所がどうなるのかわからないので普通のfor文で初期化する
+        そうなった場合,損失関数の参照場所がどうなるのかわからないので普通のfor文内包表記で初期化する
         """
         self.temporary_log={loss_name:Loss_dict[loss_name](X,Y) for loss_name in self.loss_name_set}
         """
@@ -140,8 +141,10 @@ class Loss_Functions:
         if token in Loss_Functions.operator_list:
             return "operator"
         try:
+            #損失関数のキーワードか、係数かわからないのでfloatがたにキャストしてみる。
             float(token)
         except ValueError:
+            #tokenが数字とアルファベットで構成されている→損失関数のキーワード
             if token.isalnum():
                 return "loss"
         else:
